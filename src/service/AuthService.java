@@ -33,7 +33,7 @@ private Map<String, Integer> loginAttempts = new HashMap<>();
             return;
         }
 
-        username = username.toLowerCase(); // security normalization
+        username = username.trim().toLowerCase(); // security normalization
         String hashedPassword = PasswordUtil.hashPassword(password);
 
         String sql = "INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)";
@@ -43,7 +43,7 @@ private Map<String, Integer> loginAttempts = new HashMap<>();
 
             stmt.setString(1, username);
             stmt.setString(2, hashedPassword);
-            stmt.setString(3, role);
+           stmt.setString(3, role.equalsIgnoreCase("Admin") ? "Admin" : "User");
 
             stmt.executeUpdate();
             System.out.println("User registered successfully.");
