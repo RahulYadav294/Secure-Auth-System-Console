@@ -1,43 +1,93 @@
 package service;
 
-import model.User;
+import db.DatabaseConnection;
 import util.PasswordUtil;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public class AuthService {
 
-    private Map<String, User> userStore = new HashMap<>();
-
+    // ================= REGISTER =================
     public void register(String username, String password, String role) {
-        if (userStore.containsKey(username)) {
-            System.out.println("User already exists!");
+
+        // -------- Input Validation --------
+        if (username == null || username.trim().isEmpty()) {
+            System.out.println("Username cannot be empty");
             return;
         }
 
-        String hashedPassword = PasswordUtil.hashPassword(password);
-        User user = new User(username, hashedPassword, role);
-        userStore.put(username, user);
-
-        System.out.println("User registered successfully.");
-    }
-
-    public boolean login(String username, String password) {
-        if (!userStore.containsKey(username)) {
-            System.out.println("User not found!");
-            return false;
+        if (password == null || password.length() < 6) {
+            System.out.println("Password must be at least 6 characters long");
+            return;
         }
 
-        User user = userStore.get(username);
+        if (!role.equalsIgnoreCase("Admin") && !role.equalsIgnoreCase("User")) {
+            System.out.println("Role must be Admin or User");
+            return;
+        }
+
+        username = username.toLowerCase(); // security normalization
+        String hashedPassword = PasswordUtil.hashPassword(password);
+
+        String sql = "INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, username);
+            stmt.setString(2, hashedPassword);
+            stmt.setString(3, role);
+
+            stmt.executeUpdate();
+            System.out.println("User registered successfully.");
+
+        } catch (SQLException e) {
+            if (e.getMessage().contains("Duplicate")) {
+                System.out.println("Username already exists.");
+            } else {
+                System.out.println("Registration failed.");
+            }
+        }
+    }
+
+    // ================= LOGIN =================
+    public void login(String username, String password) {
+
+        if (username == null || password == null) {
+            System.out.println("Invalid credentials");
+            return;
+        }
+
+        username = username.toLowerCase();
         String hashedInputPassword = PasswordUtil.hashPassword(password);
 
-        if (user.getPasswordHash().equals(hashedInputPassword)) {
-            System.out.println("Login successful. Role: " + user.getRole());
-            return true;
-        } else {
-            System.out.println("Invalid password!");
-            return false;
+        String sql = "SELECT password_hash, role FROM users WHERE username = ?";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, username);
+            ResultSet rs = stmt.executeQuery();
+
+            if (!rs.next()) {
+                System.out.println("Invalid credentials");
+                return;
+            }
+
+            String storedHash = rs.getString("password_hash");
+            String role = rs.getString("role");
+
+            if (storedHash.equals(hashedInputPassword)) {
+                System.out.println("Login successful. Role: " + role);
+            } else {
+                System.out.println("Invalid credentials");
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Login failed.");
         }
     }
 }
