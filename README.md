@@ -64,5 +64,5 @@ src/
 ## 🔹 Author
 **RahulYadav294**  
 GitHub: https://github.com/RahulYadav294  
-TryHackMe: https://tryhackme.com/p/YOUR_USERNAME  
-LinkedIn: https://linkedin.com/in/YOUR_USERNAME
+TryHackMe: https://tryhackme.com/p/RahulYadav295
+LinkedIn: https://linkedin.com/in/RahulYadav296
